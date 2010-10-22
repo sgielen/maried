@@ -36,14 +36,17 @@ function Main() {
 	this.down_scroll_semaphore = function() {
 		this.scroll_semaphore -= 1;
 	};
+	this.on_loginForm_submit = function(e) {
+		$.unblockUI();
+		createCookie('user', $('#loginFormUser').val());
+		createCookie('pass', $('#loginFormPass').val());
+		this.raise('new_credentials');
+	};
 	this.on_loginForm_keyDown = function(e) {
 		if(e.which == 27) {
 			$.unblockUI();
 		} else if(e.which == 13) {
-			$.unblockUI();
-			createCookie('user', $('#loginFormUser').val());
-			createCookie('pass', $('#loginFormPass').val());
-			this.raise('new_credentials');
+			this.on_loginForm_submit(e);
 		}
 	};
 	this.raise = function(ev) {
@@ -68,6 +71,9 @@ function Main() {
 			});
 		$("#loginFormPass").keydown(function(e){
 				me.on_loginForm_keyDown(e);
+			});
+		$("#loginFormSubmit").click(function(e){
+				me.on_loginForm_submit(e);
 			});
 		this.queryCheck = /^[a-z0-9 ]*$/;
 		this.queryReplace = /[^a-z0-9 ]/g;
