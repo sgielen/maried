@@ -6,7 +6,7 @@ includes:
   - sarah/shell
   - maried/ajax/ajax
   - maried/lastfm
-  - maried/mongo
+  - maried/bertha
 instances:
   classicDb:
     module: classicDb
@@ -60,8 +60,5 @@ instances:
     desk: desk
   logServer:
     module: logServer
-  mongoDb:
-    module: mongoDb
   mediaStore:
-    module: mongoMediaStore
-    db: mongoDb
+    module: berthaMediaStore
