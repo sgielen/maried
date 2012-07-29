@@ -147,6 +147,8 @@ class Desk(Module):
                 return self.collection.media_keys
         def get_media_count(self):
                 return self.collection.media_count
+        def get_media_by(self, user):
+                return filter(lambda x: x.uploadedByKey == user, self.collection.media)
         def request_media(self, media, user):
                 self.users.assert_request(user, media)
                 self.queue.request(media, user)

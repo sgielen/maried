@@ -176,6 +176,14 @@ class MariedChannelClass(JoyceChannel):
                                                         self.user)
                 elif data['type'] == 'list_media':
                         self.server._send_all_media((self,))
+                elif data['type'] == 'list_my_media':
+                        if self.user is None:
+                                self.send_message({
+                                        'type': 'error_list_my_media',
+                                        'message': 'Please log in before '+
+                                                        'requesting'})
+                                return
+                        self.server._send_media_by(self.user.key, (self,))
                 elif data['type'] == 'skip_playing':
                         self.server.desk.skip_playing(self.user)
                 elif data['type'] == 'query_media':
@@ -253,6 +261,21 @@ class JoyceRS(Module):
                 for ms in iter_by_n(self.desk.list_media(), 250):
                         msg = {
                                 'type': 'media_part',
+                                'part': [_media_dict(m) for m in ms]}
+                        for follower in followers:
+                                follower.send_message(msg)
+
+        def _send_media_by(self, user, followers):
+                media = self.desk.get_media_by(user)
+                for follower in followers:
+                        follower.send_message({
+                                'type': 'media_by',
+                                'user': user,
+                                'count': len(media)})
+                for ms in iter_by_n(media, 250):
+                        msg = {
+                                'type': 'media_by_part',
+                                'user': user,
                                 'part': [_media_dict(m) for m in ms]}
                         for follower in followers:
                                 follower.send_message(msg)
