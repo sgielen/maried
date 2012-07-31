@@ -238,7 +238,7 @@ class MongoCollection(Collection):
                 self.l.info("%s: queries matched: %s", mediaFile.key, len(qc))
                 return ret
         
-        def _unlink_media(self, media):
+        def unlink_media(self, media):
                 self.cMedia.remove({'_id': media.key})
         
         def _save_media(self, media):

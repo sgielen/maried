@@ -184,6 +184,20 @@ class MariedChannelClass(JoyceChannel):
                                                         'requesting'})
                                 return
                         self.server._send_media_by(self.user.key, (self,))
+                elif data['type'] == 'delete_media':
+                        if data['mediaKey'] is None:
+                                self.send_message({
+                                        'type': 'error_delete_media',
+                                        'message': 'mediaKey is missing'})
+                                return
+                        try:
+                                self.server._delete_media(self.user, data['mediaKey'])
+                                # TODO: how to inform all clients of this deletion?
+                        except Denied:
+                                self.send_message({
+                                        'type': 'error_delete_media',
+                                        'message': 'Deletion was denied'})
+                                return
                 elif data['type'] == 'skip_playing':
                         self.server.desk.skip_playing(self.user)
                 elif data['type'] == 'query_media':
@@ -264,6 +278,23 @@ class JoyceRS(Module):
                                 'part': [_media_dict(m) for m in ms]}
                         for follower in followers:
                                 follower.send_message(msg)
+
+        def _delete_media(self, user, key):
+                media = self.desk.collection.by_key(key)
+                self.l.info('User %s wants to delete %s' % (user, media))
+                if media is None:
+                        return
+                if user is None or user.key != media.uploadedByKey:
+                        raise Denied
+                # Remove it from any queue first
+                self.desk.queue.cancel_by_key(media.key)
+                # Then, remove it from the collection
+                media.unlink()
+                # Remove it from the queues again to make sure
+                # (it's possible it's been re-added to the queues since the
+                #  earlier cancelling; for example, the RandomQueue may have
+                #  automatically re-added it in _fill().)
+                self.desk.queue.cancel_by_key(media.key)
 
         def _send_media_by(self, user, followers):
                 media = self.desk.get_media_by(user)
