@@ -258,6 +258,17 @@ class RandomQueue(Module):
                                 'by': None}))
         def request(self, media, user):
                 assert False # shouldn't do that
+        def cancel_by_key(self, key):
+                with self.lock:
+                        if self.pre_shift_lock and key == self.list[-1].mediaKey:
+                                raise UnderPreShiftLock
+                        oldlist = self.list
+                        self.list = list()
+                        for req in oldlist:
+                                if req.mediaKey != key:
+                                        self.list.append(req)
+                        self._fill()
+                self.on_changed()
         def cancel(self, request):
                 with self.lock:
                         if self.pre_shift_lock and request == self.list[-1]:
@@ -307,6 +318,9 @@ class AmalgamatedQueue(Module):
                         tuple(self.second.requests))
         def shift(self):
                 assert False # shouldn't do that
+        def cancel_by_key(self, key):
+                self.first.cancel_by_key(key)
+                self.second.cancel_by_key(key)
         def cancel(self, request):
                 if request in self.first.requests:
                         self.first.cancel(request)
@@ -356,6 +370,16 @@ class Queue(Module):
                         self.pre_shift_lock = False
                 self.on_changed()
                 return ret
+        def cancel_by_key(self, key):
+                with self.lock:
+                        if self.pre_shift_lock and self.list[-1].mediaKey == key:
+                                raise UnderPreShiftLock
+                        oldlist = self.list
+                        self.list = list()
+                        for req in oldlist:
+                                if req.mediaKey != key:
+                                        self.list.append(req)
+                self.on_changed()
         def cancel(self, request):
                 with self.lock:
                         if self.pre_shift_lock and self.list[-1] == request:
