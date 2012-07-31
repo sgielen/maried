@@ -241,7 +241,7 @@ class MongoCollection(Collection):
         def unlink_media(self, media):
                 self.cMedia.remove({'_id': media.key})
         
-        def _save_media(self, media):
+        def save_media(self, media):
                 self.cMedia.save(media.to_dict())
 
         def _save_user(self, user):

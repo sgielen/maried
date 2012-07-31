@@ -198,6 +198,25 @@ class MariedChannelClass(JoyceChannel):
                                         'type': 'error_delete_media',
                                         'message': 'Deletion was denied'})
                                 return
+                elif data['type'] == 'update_media':
+                        if data['mediaKey'] is None:
+                                self.send_message({
+                                        'type': 'error_update_media',
+                                        'message': 'mediaKey is missing'})
+                                return
+                        if data['media'] is None:
+                                self.send_message({
+                                        'type': 'error_update_media',
+                                        'message': 'New media properties are missing'})
+                                return
+                        try:
+                                self.server._update_media(self.user, data['mediaKey'], data['media'])
+                                # TODO: how to inform all clients of this updating?
+                        except Denied:
+                                self.send_message({
+                                        'type': 'error_update_media',
+                                        'message': 'Updating was denied'})
+                                return
                 elif data['type'] == 'skip_playing':
                         self.server.desk.skip_playing(self.user)
                 elif data['type'] == 'query_media':
@@ -295,6 +314,22 @@ class JoyceRS(Module):
                 #  earlier cancelling; for example, the RandomQueue may have
                 #  automatically re-added it in _fill().)
                 self.desk.queue.cancel_by_key(media.key)
+
+        def _update_media(self, user, key, data):
+                media = self.desk.collection.by_key(key)
+                self.l.info("User %s wants to update %s:" % (user, media));
+                self.l.info(str(data))
+                if media is None:
+                        return
+                if user is None or user.key != media.uploadedByKey:
+                        raise Denied
+                allowed_keys = ['title', 'artist']
+                for key in data:
+                        if key in allowed_keys:
+                                self.l.info("Saving")
+                                media.__setattr__(key, data[key])
+                media.save()
+                # TODO: caches might be incorrect now, we should clear or re-generate them
 
         def _send_media_by(self, user, followers):
                 media = self.desk.get_media_by(user)
